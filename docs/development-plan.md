@@ -45,6 +45,10 @@
    - 默认使用 `shutil.move`。
    - Before moving, compute a hash (e.g., SHA-256) and compare against files already in the target path; treat identical hashes as duplicates and skip moving.
    - 移动前计算哈希（如 SHA-256）并与目标路径已存在文件比对，若哈希一致则视为重复并跳过移动。
+   - Maintain destination-specific hash indexes persisted on disk (e.g., JSON/SQLite manifest) and mirrored in memory so duplicate checks reuse cached hashes instead of rescanning every file.
+   - 为每个目标目录维护落盘的哈希索引（如 JSON/SQLite 清单）并映射到内存，借助缓存结果完成重复检测，避免反复扫描所有文件。
+   - Build each destination folder’s hash cache lazily the first time that folder is touched, then update it incrementally as files move in.
+   - 采用延迟加载策略：首次访问某目标目录时才构建其哈希缓存，并在文件迁入时增量更新，以降低整体 I/O。
    - Apply the same hashing, collision, and transfer rules to video files so photos/videos share a unified pipeline.
    - 对视频文件沿用同样的哈希、重名与迁移规则，保持照片与视频的统一流程。
    - Detect name collisions; append suffix or hash to keep unique names.
@@ -126,7 +130,8 @@
    - 使用 `Path.mkdir(parents=True, exist_ok=True)` 确保目录存在。
    - Resolve filename collisions with `organizer.ensure_unique_name(dest_dir, candidate_name)`.
    - 借助 `organizer.ensure_unique_name(dest_dir, candidate_name)` 解决重名。
-   - Attempt move; if it fails, try copy and classify result (moved/copied/failed, renamed flag).
+   - Load (or lazily build) the destination folder’s hash cache before duplicate comparison, and always persist updates so future runs can reuse the data.
+   - 在重复检测前加载（或延迟构建）目标目录的哈希缓存，并在更新后立即持久化，确保后续运行可以复用。
    - Before moving, compare hashes to detect duplicates; skip duplicates and classify as "skipped-duplicate" with context.
    - 移动前比对哈希以检测重复，若重复则跳过并记录为“skipped-duplicate”及相关信息。
    - Attempt move; if it fails, try copy and classify result (moved/copied/failed, renamed flag).
