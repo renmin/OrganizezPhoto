@@ -17,6 +17,8 @@
 1. **输入处理**
    - Accept CLI args or config for source, destination, dry-run, HTML report path, logging level.
    - 支持通过命令行或配置指定源目录、目标目录、试运行开关、HTML 报告路径与日志级别。
+   - When the HTML report path is omitted, default to saving the report inside the source folder (e.g., `source/organize-report.html`).
+   - 若未指定 HTML 报告路径，则默认写入源目录（例如 `source/organize-report.html`）。
    - Validate directories and permissions before execution.
    - 执行前检查目录存在性与写权限。
 2. **Media Discovery**
@@ -81,6 +83,12 @@
    - 将错误按元数据、IO、权限等分类记录。
    - Retry transient issues (e.g., sharing violation) with back-off.
    - 对临时错误（如共享冲突）采用退避重试。
+9. **Test Data Generator**
+9. **测试数据生成工具**
+   - Provide a helper command that randomly copies a specified number of photos/videos (default 100) from a seed directory into a dedicated test source folder.
+   - 提供一个辅助命令，从指定种子目录随机拷贝若干（默认 100）张照片或视频到测试源目录。
+   - Support CLI flags for seed path, destination test folder, media count, and optional filters so QA can quickly prepare test batches.
+   - 支持通过命令行指定种子路径、测试目录、拷贝数量及可选过滤条件，便于快速生成测试数据。
 
 ## 3. Non-Functional Requirements
 ## 3. 非功能性需求
@@ -111,6 +119,8 @@
 - `report.py`：汇总运行信息并生成 HTML 报告。
 - `logger.py`: Configure shared structured logging.
 - `logger.py`：提供共享的结构化日志配置。
+- `testdata.py`: Randomly sample media files into test source folders for QA scenarios.
+- `testdata.py`：将媒体文件随机采样至测试源目录，支持 QA 场景。
 - Data flow: CLI → Scanner → Metadata → Organizer → Transfer → Report/Logging.
 - 数据流：CLI → Scanner → Metadata → Organizer → Transfer → Report/Logging。
 
@@ -140,6 +150,8 @@
    - 用元数据与相对路径更新进度 UI 和报告跟踪。
 4. After processing, call `report.render(html_path)` to output the HTML summary.
 4. 全部完成后调用 `report.render(html_path)` 生成 HTML 总结。
+   - Resolve `html_path` to the user-provided location or fall back to `<source>/organize-report.html` when unspecified.
+   - 若用户未提供报告路径，则回退到 `<source>/organize-report.html` 作为输出位置。
 
 ## 6. Progress & UX Details
 ## 6. 进度与体验细节
@@ -210,6 +222,8 @@
 - 使用 pytest 针对元数据边界、路径格式、重名处理和 HTML 报告快照进行测试。
 - Run integration tests with temporary directories and sample images to verify end-to-end moves and report content.
 - 通过临时目录与示例图片执行端到端集成测试，验证迁移与报告内容。
+- Leverage the test data generator to quickly assemble randomized media batches for regression suites.
+- 利用测试数据生成工具快速构建随机媒体样本，支撑回归测试。
 
 ## 10. Milestones
 ## 10. 里程碑
