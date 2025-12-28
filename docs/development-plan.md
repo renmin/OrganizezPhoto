@@ -43,6 +43,8 @@
 5. **文件迁移逻辑**
    - Prefer `shutil.move` for moves.
    - 默认使用 `shutil.move`。
+   - Before moving, compute a hash (e.g., SHA-256) and compare against files already in the target path; treat identical hashes as duplicates and skip moving.
+   - 移动前计算哈希（如 SHA-256）并与目标路径已存在文件比对，若哈希一致则视为重复并跳过移动。
    - Detect name collisions; append suffix or hash to keep unique names.
    - 检测重名并追加序号或哈希以保证唯一性。
    - On move failure (permissions, cross-device) fall back to copy (+ delete if possible).
@@ -58,7 +60,7 @@
    - Summarize moved, copied, renamed, skipped/failed counts.
    - 汇总移动、复制、重命名、跳过/失败的数量。
    - Provide sections for moved samples, renamed files (with `file://` links + thumbnails), copied files, failures with reasons.
-   - 展示移动样例、重命名文件（含 `file://` 链接与缩略图）、复制文件及失败原因。
+   - 展示移动样例、重命名文件（含 `file://` 链接与缩略图）、复制文件、以及失败与跳过原因。
    - Embed lightweight CSS for offline readability.
    - 内嵌轻量 CSS 以保证离线可读。
 8. **Error Handling**
@@ -119,6 +121,9 @@
    - Resolve filename collisions with `organizer.ensure_unique_name(dest_dir, candidate_name)`.
    - 借助 `organizer.ensure_unique_name(dest_dir, candidate_name)` 解决重名。
    - Attempt move; if it fails, try copy and classify result (moved/copied/failed, renamed flag).
+   - Before moving, compare hashes to detect duplicates; skip duplicates and classify as "skipped-duplicate" with context.
+   - 移动前比对哈希以检测重复，若重复则跳过并记录为“skipped-duplicate”及相关信息。
+   - Attempt move; if it fails, try copy and classify result (moved/copied/failed, renamed flag).
    - 首选移动，失败则复制，并记录结果类型（移动/复制/失败及重命名标记）。
    - Update progress UI and report tracker with metadata + relative paths.
    - 用元数据与相对路径更新进度 UI 和报告跟踪。
@@ -168,13 +173,16 @@
   <!-- 重命名板块 -->
   <section id="copied">...</section>
   <!-- 复制板块 -->
+   <section id="skipped-duplicates">...</section>
+   <!-- 重复跳过板块 -->
   <section id="failed">...</section>
   <!-- 失败板块 -->
 </body>
 </html>
 ```
 - Each table row should list original path, new path (hyperlinked), reason (renamed/copied/failed), plus a thumbnail `<img>` pointing to the destination file.
-- 每行需包含原路径、新路径（超链接）、原因（重命名/复制/失败）以及指向目标文件的 `<img>` 缩略图。
+- Each table row should list original path, new path (hyperlinked or destination reference), reason (renamed/copied/failed/skipped-duplicate), plus a thumbnail `<img>` pointing to the destination file.
+- 每行需包含原路径、新路径（或目标引用的超链接）、原因（重命名/复制/失败/重复跳过）以及指向目标文件的 `<img>` 缩略图。
 
 ## 8. Error & Retry Strategy
 ## 8. 错误与重试策略
