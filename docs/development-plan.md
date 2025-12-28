@@ -19,12 +19,12 @@
    - 支持通过命令行或配置指定源目录、目标目录、试运行开关、HTML 报告路径与日志级别。
    - Validate directories and permissions before execution.
    - 执行前检查目录存在性与写权限。
-2. **Photo Discovery**
-2. **照片扫描**
+2. **Media Discovery**
+2. **媒体扫描**
    - Recursively traverse the source directory.
    - 递归遍历源目录。
-   - Filter supported formats (JPEG, PNG, HEIC, RAW) with extensible config.
-   - 过滤受支持的图片格式（JPEG、PNG、HEIC、RAW），并允许扩展配置。
+   - Filter supported image formats (JPEG, PNG, HEIC, RAW) and video formats (MP4, MOV, HEVC) with extensible config.
+   - 过滤受支持的图片格式（JPEG、PNG、HEIC、RAW）与视频格式（MP4、MOV、HEVC），并允许扩展配置。
 3. **Metadata Extraction**
 3. **元数据提取**
    - Use Pillow/piexif to read `DateTimeOriginal`, `DateTime`, `CreateDate`.
@@ -45,6 +45,8 @@
    - 默认使用 `shutil.move`。
    - Before moving, compute a hash (e.g., SHA-256) and compare against files already in the target path; treat identical hashes as duplicates and skip moving.
    - 移动前计算哈希（如 SHA-256）并与目标路径已存在文件比对，若哈希一致则视为重复并跳过移动。
+   - Apply the same hashing, collision, and transfer rules to video files so photos/videos share a unified pipeline.
+   - 对视频文件沿用同样的哈希、重名与迁移规则，保持照片与视频的统一流程。
    - Detect name collisions; append suffix or hash to keep unique names.
    - 检测重名并追加序号或哈希以保证唯一性。
    - On move failure (permissions, cross-device) fall back to copy (+ delete if possible).
@@ -60,7 +62,11 @@
    - Summarize moved, copied, renamed, skipped/failed counts.
    - 汇总移动、复制、重命名、跳过/失败的数量。
    - Provide sections for moved samples, renamed files (with `file://` links + thumbnails), copied files, failures with reasons.
-   - 展示移动样例、重命名文件（含 `file://` 链接与缩略图）、复制文件、以及失败与跳过原因。
+   - 展示移动样例、重命名文件（含 `file://` 链接与原文件预览）、复制文件、以及失败与跳过原因。
+   - Ensure all narrative text in the HTML report is written in Chinese for consistency.
+   - 报告中的说明文字全部使用中文，保持一致的用户体验。
+   - Reference the original media files directly for previews (`<img src="...">` for photos, `<video src="..." controls>` for videos) without generating separate thumbnails.
+   - 预览直接引用原始媒体文件（照片用 `<img src="...">`，视频用 `<video src="..." controls>`），无需额外生成缩略图。
    - Embed lightweight CSS for offline readability.
    - 内嵌轻量 CSS 以保证离线可读。
 8. **Error Handling**
@@ -181,8 +187,8 @@
 </html>
 ```
 - Each table row should list original path, new path (hyperlinked), reason (renamed/copied/failed), plus a thumbnail `<img>` pointing to the destination file.
-- Each table row should list original path, new path (hyperlinked or destination reference), reason (renamed/copied/failed/skipped-duplicate), plus a thumbnail `<img>` pointing to the destination file.
-- 每行需包含原路径、新路径（或目标引用的超链接）、原因（重命名/复制/失败/重复跳过）以及指向目标文件的 `<img>` 缩略图。
+ - Each table row should list original path, new path (hyperlinked or destination reference), reason (renamed/copied/failed/skipped-duplicate), and an inline preview referencing the original media (`<img>` for photos, `<video>` for videos).
+ - 每行需包含原路径、新路径（或目标引用的超链接）、原因（重命名/复制/失败/重复跳过），并直接嵌入指向原文件的预览（照片用 `<img>`，视频用 `<video>`）。
 
 ## 8. Error & Retry Strategy
 ## 8. 错误与重试策略
@@ -213,9 +219,7 @@
 
 ## 11. Open Questions / Next Steps
 ## 11. 未决问题与后续计划
-- Decide on thumbnail generation for large RAW files (downscaled copies vs. on-demand rendering).
-- 确定大体积 RAW 文件的缩略图策略（预生成下采样或按需渲染）。
-- Evaluate supporting video formats (MP4, MOV) as a stretch goal.
-- 评估将 MP4、MOV 等视频格式纳入扩展目标的可行性。
-- Define localization needs for report text and UI strings.
-- 明确报告文本与界面字符串的本地化需求。
+- Determine whether additional video formats (e.g., AVI, MKV) or optional transcoding workflows are needed beyond the core set.
+- 评估是否需要在现有格式之外支持更多视频格式（如 AVI、MKV）或引入可选的转码流程。
+- Plan for future multi-language report support should non-Chinese exports become necessary.
+- 若未来需要非中文导出，需规划多语言报告的支持方案。
